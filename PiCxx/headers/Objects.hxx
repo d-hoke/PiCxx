@@ -17,6 +17,8 @@
 
 #include <complex>
 
+#include <algorithm> //visstu cl std::min
+
 namespace Py
 {
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

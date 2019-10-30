@@ -300,8 +300,22 @@ namespace Py
         // overloads for a new-style class (notice that each method gets its own handler)
         template <F0 f> static void register_method( C name, C doc=nullptr )  { internal_register_method( name, f, (PyCFunction)&handler<f>, doc ); }
         template <F1 f> static void register_method( C name, C doc=nullptr )  { internal_register_method( name, f, (PyCFunction)&handler<f>, doc ); }
+		#if defined _MSC_VER && (_MSC_VER == 1916)
+        //no - template <F2 f> static void register_method( C name, C doc=nullptr ) { internal_register_method( name, f,reinterpret_cast<PyCFunction>(&handler<f>), doc ); }
+        //no - template <F2 f> static void register_method( C name, C doc=nullptr ) { internal_register_method( name, f,static_cast<PyCFunction>(&handler<f>), doc ); }
+        template <F2 f> static void register_method( C name, C doc=nullptr )  
+		{
+		   //no...
+		   //auto fp = (PyCFunction)&handler<f>;
+		   //internal_register_method( name, f, fp, doc );
+		   //hmm, so _MCS_VER 1916 will compile this, but not the other varieties... ?
+		   //Yes!!!
+		   auto fp = /*(PyCFunction)*/&handler<f>;
+		   internal_register_method( name, f, (PyCFunction)fp, doc );
+		}
+		#else
         template <F2 f> static void register_method( C name, C doc=nullptr )  { internal_register_method( name, f, (PyCFunction)&handler<f>, doc ); }
-
+		#endif
 
     };
 

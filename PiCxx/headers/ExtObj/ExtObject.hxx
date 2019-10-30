@@ -94,6 +94,35 @@ Discussion:
 
 namespace Py
 {
+#if defined _MSC_VER 
+#pragma message "_MSC_VER detected"
+#if (_MSC_VER == 1916) // (Visual Studio 2017 version 15.9, may need others too)
+#pragma message "msvisstu vers 1916 detected"
+//from https://stackoverflow.com/questions/34672441/stdis-base-of-for-template-classes
+template < template <typename...> class base,typename derived>
+struct is_base_of_template_impl
+{
+    template<typename... Ts>
+    static constexpr std::true_type  test(const base<Ts...> *);
+    static constexpr std::false_type test(...);
+    using type = decltype(test(std::declval<derived*>()));
+};
+
+template < template <typename...> class base,typename derived>
+using is_base_of_template = typename is_base_of_template_impl<base,derived>::type;
+#else
+//////////or original was, but apparently fails with visstu 2017 (at least vers I'm checking above)
+//https://stackoverflow.com/questions/34782217/force-template-parameter-class-to-inherit-from-another-templated-class-with-part/34785826#34785826
+template <template <typename...> class C, typename...Ts>
+std::true_type is_base_of_template_impl(const C<Ts...>*);
+
+template <template <typename...> class C>
+std::false_type is_base_of_template_impl(...);
+
+template <typename T, template <typename...> class C>
+using is_base_of_template = decltype(is_base_of_template_impl<C>(std::declval<T*>()));
+#endif
+#endif
     template< typename Final >
     class ExtObject : public FuncMapper<Final> , public ExtObjBase
     {
@@ -110,8 +139,12 @@ namespace Py
         {
             static TypeObject* t{ nullptr };
             if( ! t ) {
+#if defined _MSC_VER //maybe not needed for other than vers == 1916, don't currently know
+                bool is_newstyle = is_base_of_template<NewStyle, Final>::value;
+#else
                 class NewStyle;
                 bool is_newstyle = std::is_base_of<NewStyle, Final>::value;
+#endif
                 size_t finalsize = is_newstyle ? sizeof(Bridge) : sizeof(Final);
 
                 std::string finalname = typeid(Final).name();

@@ -29,6 +29,8 @@
 
 #include "Objects.hxx"
 
+#include <strstream>
+
 using namespace Py;
 
 
@@ -133,6 +135,42 @@ void test_ob() {
 
         // test appending one list to another
         Object list( 'L', 1,2,3 );
+		#if defined _MSC_VER
+		//std::string s = {
+		//auto s1 = {
+        //        list += Object( 'L', 4,5 );
+        //        list;
+        //    } ;
+        //XCOUT( s1 );
+		auto l1 = [&]() -> std::string
+			{
+                list += Object( 'L', 4,5 );
+                list;
+				return std::string(list);
+            } ;			
+		XCOUT( l1() );
+
+        // test modifying list and fast enumeration
+		//std::string s2 = {
+        //        list[1] = 42;
+        //        for(auto&& i : list)
+        //            std::cout << i << ", ";
+        //        "\n" "woot";
+        //    };
+        //XCOUT( s2  );
+		auto l2 = [&]() ->std::string {
+			//std::streamstr s;
+			std::strstream s;
+			//std::streamstring s;
+                list[1] = 42;
+                for(auto&& i : list)
+                    //std::cout << i << ", ";
+                    s << i << ", ";
+                s << "\n" "woot";
+			return s.str();
+            };
+		XCOUT( l2() );
+		#else
         XCOUT( {
                 list += Object( 'L', 4,5 );
                 list;
@@ -145,6 +183,7 @@ void test_ob() {
                     std::cout << i << ", ";
                 "\n" "woot";
             } );
+		#endif
             /*
                 ^ list has a .begin() that returns an rvalue? you want auto&& i.
                 auto will make a copy (which accepts rvalue), const auto& will bind to rvalue
